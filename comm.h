@@ -8,4 +8,4 @@
 int createSocket(char * ip, uint16_t port);
 
 int rps_send(int sockfd,char * ip, uint16_t port, char * message);
-char *rps_recv(int sockfd,char *ip, uint16_t port, int recv_amount); 
+char *rps_recv(int sockfd,char *ip, uint16_t *port, int recv_amount); 

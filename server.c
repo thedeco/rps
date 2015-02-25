@@ -46,17 +46,31 @@ int playgame(){
 }
 
 /*
+Sends the new user a welcome message and prompts if the user wants to play returns 1 for new game and 2 for goodbye message
+*/
+int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
+    printf("Sending Welcome Message to: %s on port: %hu\n", ip, port);
+    rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!\n");  
+    rps_send(sockfd,ip,port,"Want to play a game?\n");
+}
+
+/*
 Recieve from loop
 */
-int recvinfo(int sockfd, char * ip, uint16_t port){
-    //struct sockaddr_in clientaddr;
+int recvinfo(int sockfd){
+    struct sockaddr_in clientaddr;
     char * recv_buffer;
-    //char clientip[16];
+    char ip[16];
+    uint16_t port;
     
     //Handshake
-    recv_buffer = rps_recv(sockfd, ip, port, 5);
-    printf("%s\n", recv_buffer);
-
+    recv_buffer = rps_recv(sockfd, ip, &port, 6);
+    printf("Client says: %s\n", recv_buffer);
+    if(strncmp(recv_buffer, "Hello", 5)== 0){
+        sendwelcomemsg(sockfd, ip, port);
+    }
+    else
+        printf("other");
 /*
 //Recvloop-------------------------------------------------------------------------------------
     fprintf(stderr, "Server is waiting for new data...\n");
@@ -112,14 +126,6 @@ int cleanup(int sockfd){
     close(sockfd);
 }
 
-/*
-Sends the new user a welcome message and prompts if the user wants to play returns 1 for new game and 2 for goodbye message
-*/
-int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
-    rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!\n");  
-    rps_send(sockfd,ip,port,"Want to play a game?\n");
-}
-
 int main(int argc, char *argv[]){
     struct gameinfo game;
     int sockfd, result, opt;
@@ -165,7 +171,7 @@ int main(int argc, char *argv[]){
     printf("Starting Game Server\n");
     create(&game);
     sockfd = createSocket(ipaddr, port);
-    recvinfo(sockfd, ipaddr, port);
+    recvinfo(sockfd);
     //result = playgame();
     //printf("%d\n",result);
     //printf("Play Again <Y/N>: ");
