@@ -1,5 +1,5 @@
 #include "comm.c"
-
+#include <unistd.h>
 
 #define ROCK 0
 #define PAPER 1

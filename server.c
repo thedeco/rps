@@ -48,7 +48,7 @@ int playgame(){
 /*
 Recieve from loop
 */
-int recvinfo(int sockfd){
+int recvinfo(int sockfd, char * ip, uint16_t port){
     struct sockaddr_in clientaddr;
     char * recv_buffer;
     char clientip[16];
@@ -56,7 +56,7 @@ int recvinfo(int sockfd){
 //Recvloop-------------------------------------------------------------------------------------
     fprintf(stderr, "Server is waiting for new data...\n");
     for (;;){
-        rps_recv(sockfd, &clientaddr, recv_buffer,4);
+        rps_recv(sockfd, ip,port , recv_buffer,4);
         printf("%s\n", recv_buffer);
        //---------------------------------------------------------------------------------------------
     }
@@ -108,19 +108,57 @@ int cleanup(int sockfd){
 /*
 Sends the new user a welcome message and prompts if the user wants to play returns 1 for new game and 2 for goodbye message
 */
-int sendwelcomemsg(int sockfd, struct sockaddr_in *clientaddr){
-    rps_send(sockfd,clientaddr,"Welcome to my rock paper scissor server!\n");  
-    rps_send(sockfd,clientaddr,"Want to play a game?\n");
+int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
+    rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!\n");  
+    rps_send(sockfd,ip,port,"Want to play a game?\n");
 }
 
-int main(){
+int main(int argc, char *argv[]){
     struct gameinfo game;
-    int sockfd, result;
-   
+    int sockfd, result, opt;
+    char * ipaddr,buf;
+    uint16_t port;
+
+    ipaddr = "127.0.0.1";
+    port = 0;
+    //if(argc < 2 || argc > 2){
+     //   fprintf(stderr, "Usage: %s [-i IP Address] [-p Port #]\n",argv[0]);
+      //  return -1;
+   // }
+ 
+    while ((opt = getopt(argc, argv, "i:p:")) != -1) {
+        switch (opt) {
+            case 'i': //-i: server IP address
+               if(inet_pton(AF_INET, optarg, &buf) == 1){  //inet_pton() returns 1 on success
+                    memset(ipaddr, 0, 16);
+                    snprintf(ipaddr, 16, "%s", optarg);
+               }
+                else{
+                    fprintf(stderr, "Enter a valid IPv4 address\n");
+                    return -1;
+                }
+                break;
+
+            case 'p': 
+               port = atoi(optarg);
+               if(port < 1024 || port > 65535){
+                    fprintf(stderr, "Port must be a value between 1025 - 65534\n");
+                    return -1;
+                }
+                break;
+    
+               default: /* 'Wrong usage fail' */
+            fprintf(stderr, "Usage: %s [-i IP Address] [-p Port #]\n",argv[0]);
+            return -1;
+        }
+    }
+ 
+
+  
     printf("Starting Game Server\n");
     create(&game);
-    sockfd = createSocket(1337);
-    recvinfo(sockfd);
+    sockfd = createSocket(ipaddr, port);
+    recvinfo(sockfd, ipaddr, port);
     //result = playgame();
     //printf("%d\n",result);
     //printf("Play Again <Y/N>: ");

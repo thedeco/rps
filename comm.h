@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-int createSocket(uint16_t port);
-int rps_send(int sockfd,struct sockaddr_in *clientaddr, char * message);
-int rps_recv(int sockfd, struct sockaddr_in *clientaddr, char * dst_buffer, int recv_amount); 
+int createSocket(char * ip, uint16_t port);
+
+int rps_send(int sockfd,char * ip, uint16_t port, char * message);
+int rps_recv(int sockfd,char *ip, uint16_t port, char * dst_buffer, int recv_amount); 

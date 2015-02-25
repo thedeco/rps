@@ -4,10 +4,10 @@
 Creates socket (sockfd)
 Returns the socket file descriptor or -1 on error.
 */
-int createSocket(uint16_t port){
+int createSocket(char * ip, uint16_t port){
     int sockfd, bindRetCode;
-    struct sockaddr_in srvaddr;
-
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(addr);
 //-------------------------------------------------------------------
 //Create the Socket
     sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -19,19 +19,24 @@ int createSocket(uint16_t port){
  
 //-------------------------------------------------------------------
 //Populate the srvaddr struct with Family,Port and IP addr
-    memset(&srvaddr, 0, sizeof(srvaddr));
-    srvaddr.sin_family = AF_INET; //IPv4
-    srvaddr.sin_port = htons(port);
-    srvaddr.sin_addr.s_addr = INADDR_ANY;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET; //IPv4
+    addr.sin_port = htons(port);
+    //srvaddr.sin_addr.s_addr = INADDR_ANY;
+    inet_pton(AF_INET, ip, &addr.sin_addr.s_addr);
 
 //-------------------------------------------------------------------
 //Bind to the Socket
-    bindRetCode = bind(sockfd, (struct sockaddr *)&srvaddr, sizeof(srvaddr));        
+    bindRetCode = bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));        
     if(bindRetCode !=0){
         perror("bind");
         return -1;
     }
-    printf("Bound to Port: %hu\n", port);
+ if (getsockname(sockfd, (struct sockaddr *)&addr, &len) == -1)    
+    perror("getsockname");
+ else
+    printf("Bound to IP: %s\n", ip);
+    printf("Bound to Port: %d\n", ntohs(addr.sin_port));
 
 //-------------------------------------------------------------------
 //sockfd is the file descriptor for the newly created socket
@@ -41,10 +46,16 @@ int createSocket(uint16_t port){
 /*
 Send to address in clientaddr given a socket file descriptor, clientaddr sockaddr_in struct, and a pointer to the message to be sent
 */
-int rps_send(int sockfd,struct sockaddr_in *sendaddr, char * message){
+int rps_send(int sockfd,char * ip, uint16_t port, char * message){
     int bytes_sent;
-    bytes_sent = sendto(sockfd,message,strlen(message),0,(struct sockaddr *)sendaddr,sizeof(:wq
-*clientaddr));
+    struct sockaddr_in sendaddr;
+
+    memset(&sendaddr, 0, sizeof(sendaddr));
+    sendaddr.sin_family = AF_INET;
+    sendaddr.sin_port = htons(port);
+    inet_pton(AF_INET, ip, &sendaddr.sin_addr.s_addr);
+    
+    bytes_sent = sendto(sockfd,message,strlen(message),0,(struct sockaddr *)&sendaddr,sizeof(sendaddr));
     if(bytes_sent == -1){
         perror("sendto");
         return -1;
@@ -56,10 +67,18 @@ int rps_send(int sockfd,struct sockaddr_in *sendaddr, char * message){
 Recieves from the address in clientaddr given a socket file descriptor, clientaddr sockaddr_in struct, and the amount to recieve
 returns a pointer to the buffer where the information will be stored
 */
-int rps_recv(int sockfd, struct sockaddr_in *recvaddr,char * dst_buffer, int recv_amount){
+int rps_recv(int sockfd,char * ip, uint16_t port,char * dst_buffer, int recv_amount){
+    struct sockaddr_in recvaddr;
     socklen_t len;
-    len = sizeof(*recvaddr);
+
+     memset(&recvaddr, 0, sizeof(recvaddr));
+    recvaddr.sin_family = AF_INET;
+    recvaddr.sin_port = htons(port);
+    recvaddr.sin_addr.s_addr =  inet_addr(ip);
+    
+
+    len = sizeof(recvaddr);
     dst_buffer = (char *)malloc(recv_amount);
-    recvfrom(sockfd,dst_buffer,recv_amount,0,(struct sockaddr *)recvaddr,&len);
+    recvfrom(sockfd,dst_buffer,recv_amount,0,(struct sockaddr *)&recvaddr,&len);
     return 0;
 }
