@@ -70,7 +70,7 @@ returns a pointer to the buffer where the information will be stored
 char *rps_recv(int sockfd,char * ip, uint16_t * port, int recv_amount){
     struct sockaddr_in recvaddr;
     char * dst_buffer;
-
+   
     memset(&recvaddr, 0, sizeof(recvaddr));
     socklen_t len = sizeof(recvaddr);
   //  recvaddr.sin_family = AF_INET;
@@ -80,7 +80,7 @@ char *rps_recv(int sockfd,char * ip, uint16_t * port, int recv_amount){
     dst_buffer = (char *)malloc(recv_amount);
     recvfrom(sockfd,dst_buffer,recv_amount,0,(struct sockaddr *)&recvaddr,&len);
     (*port) = ntohs(recvaddr.sin_port);
-    inet_ntop(AF_INET,&(recvaddr.sin_addr),ip, sizeof ip);
-    
+    inet_ntop(AF_INET,&(recvaddr.sin_addr),ip, 16);
+ 
     return dst_buffer;
 }

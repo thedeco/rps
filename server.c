@@ -50,8 +50,11 @@ Sends the new user a welcome message and prompts if the user wants to play retur
 */
 int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
     printf("Sending Welcome Message to: %s on port: %hu\n", ip, port);
-    rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!\n");  
-    rps_send(sockfd,ip,port,"Want to play a game?\n");
+    rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!");  
+    printf("Sending Game Prompt to: %s on port: %hu\n", ip, port);
+    rps_send(sockfd,ip,port,"Want to play a game?");
+    rps_send(sockfd,ip,port,"(Y/N): ");
+
 }
 
 /*
@@ -62,10 +65,12 @@ int recvinfo(int sockfd){
     char * recv_buffer;
     char ip[16];
     uint16_t port;
-    
+
+    memset(ip,0,16);   
+ 
     //Handshake
     recv_buffer = rps_recv(sockfd, ip, &port, 6);
-    printf("Client says: %s\n", recv_buffer);
+    printf("New Message from: %s:%hu -> %s\n",ip,port ,recv_buffer);
     if(strncmp(recv_buffer, "Hello", 5)== 0){
         sendwelcomemsg(sockfd, ip, port);
     }
