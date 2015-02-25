@@ -49,10 +49,15 @@ int playgame(){
 Recieve from loop
 */
 int recvinfo(int sockfd, char * ip, uint16_t port){
-    struct sockaddr_in clientaddr;
+    //struct sockaddr_in clientaddr;
     char * recv_buffer;
-    char clientip[16];
+    //char clientip[16];
+    
+    //Handshake
+    recv_buffer = rps_recv(sockfd, ip, port, 5);
+    printf("%s\n", recv_buffer);
 
+/*
 //Recvloop-------------------------------------------------------------------------------------
     fprintf(stderr, "Server is waiting for new data...\n");
     for (;;){
@@ -61,6 +66,8 @@ int recvinfo(int sockfd, char * ip, uint16_t port){
        //---------------------------------------------------------------------------------------------
     }
 } 
+*/
+}
 
 /*
 Adds a user to the linked list and updates the game struct with that new user
@@ -120,7 +127,7 @@ int main(int argc, char *argv[]){
     uint16_t port;
 
     ipaddr = "127.0.0.1";
-    port = 0;
+    port = 1337;
     //if(argc < 2 || argc > 2){
      //   fprintf(stderr, "Usage: %s [-i IP Address] [-p Port #]\n",argv[0]);
       //  return -1;

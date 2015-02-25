@@ -5,13 +5,17 @@ Initiate handshake with the server
 */
 void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     char * recv_buffer;
-    //char srvip[16];
-    recv_buffer = (char *)malloc(4);
 
     //inet_ntop(AF_INET, &(*srvaddr.sin_addr.s_addr), srvip, 16);
     //printf("Connecting to: (%s:%hu)\n",srvip,ntohs(srvaddr.sin_port));
     rps_send(sockfd,ipaddr, port, "Hello");
+    recv_buffer = rps_recv(sockfd, ipaddr, port, 5);
+    printf("-------------------------------------------------------\n");    
+    printf("Received the following:\n"); 
+    printf("%s",recv_buffer); 
+    
 
+    /*
     printf("Entering Recv Loop...\n");
     for (;;){
         rps_recv(sockfd, ipaddr, port, recv_buffer, 4);
@@ -19,6 +23,7 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
         printf("Received the following:\n"); 
         printf("%s",recv_buffer); 
     }
+    */
 }
 
 int main(int argc, char *argv[]){
@@ -60,7 +65,7 @@ int main(int argc, char *argv[]){
 
 
     printf("Starting Client Program\n");
-    sockfd = createSocket(ipaddr, port);
+    sockfd = createSocket(ipaddr, 0);
     sendHelloMessage(sockfd, ipaddr, port);
     printf("Closing Socket #: %d\n", sockfd);   
     close(sockfd);

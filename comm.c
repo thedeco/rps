@@ -67,18 +67,18 @@ int rps_send(int sockfd,char * ip, uint16_t port, char * message){
 Recieves from the address in clientaddr given a socket file descriptor, clientaddr sockaddr_in struct, and the amount to recieve
 returns a pointer to the buffer where the information will be stored
 */
-int rps_recv(int sockfd,char * ip, uint16_t port,char * dst_buffer, int recv_amount){
+char *rps_recv(int sockfd,char * ip, uint16_t port, int recv_amount){
     struct sockaddr_in recvaddr;
     socklen_t len;
+    char * dst_buffer;
 
-     memset(&recvaddr, 0, sizeof(recvaddr));
+    memset(&recvaddr, 0, sizeof(recvaddr));
     recvaddr.sin_family = AF_INET;
     recvaddr.sin_port = htons(port);
     recvaddr.sin_addr.s_addr =  inet_addr(ip);
-    
 
     len = sizeof(recvaddr);
     dst_buffer = (char *)malloc(recv_amount);
     recvfrom(sockfd,dst_buffer,recv_amount,0,(struct sockaddr *)&recvaddr,&len);
-    return 0;
+    return dst_buffer;
 }
