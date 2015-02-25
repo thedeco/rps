@@ -7,6 +7,7 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     char * recv_buffer;
     char ip[16];
     uint16_t tempport;
+    char answer[2];
 
     //inet_ntop(AF_INET, &(*srvaddr.sin_addr.s_addr), srvip, 16);
     //printf("Connecting to: (%s:%hu)\n",srvip,ntohs(srvaddr.sin_port));
@@ -19,8 +20,11 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     recv_buffer = rps_recv(sockfd, ip, &tempport, 60); //60 Bytes to recv prompt msg from server
     printf("%s\n",recv_buffer); 
     recv_buffer = rps_recv(sockfd, ip, &tempport, 25);
-    printf("%s\n",recv_buffer); 
-       
+    printf("%s",recv_buffer); 
+    fgets(answer, 2, stdin);
+    printf("%s\n", answer);   
+    if(strncmp(answer, "N", 1) == 0){
+        printf("Goodbye\n"); //get stats
 
     /*
     printf("Entering Recv Loop...\n");
