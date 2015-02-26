@@ -8,45 +8,54 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     char ip[16];
     uint16_t tempport;
     char answer[10];
+    int playflag = 1, i;
 
+//Sends Hello Message to server and gets response & prints it--------------
     printf("Connecting to server: %s, on port %hu\n", ipaddr, port);
+    printf("-------------------------------------------------------------------\n");
     rps_send(sockfd,ipaddr, port, "Hello");
-    recv_buffer = rps_recv(sockfd, ip, &tempport, 60); //60 Bytes to recv welcome msg from server
+    recv_buffer = rps_recv(sockfd, ip, &tempport, 60);  //Welcome Msg
     printf("%s\n",recv_buffer); 
-    recv_buffer = rps_recv(sockfd, ip, &tempport, 60); //60 Bytes to recv prompt msg from server
-    printf("%s\n",recv_buffer); 
-    recv_buffer = rps_recv(sockfd, ip, &tempport, 25);
-    printf("%s",recv_buffer); 
-    fgets(answer, 3, stdin);
-    if(strncmp(answer, "Y", 1) == 0){
-        rps_send(sockfd, ipaddr, port, answer);
-        recv_buffer = rps_recv(sockfd, ip, &tempport, 50);
-        printf("%s", recv_buffer);
-        recv_buffer = rps_recv(sockfd, ip, &tempport, 12);
-        printf("%s", recv_buffer);  
-        fgets(answer, 10, stdin);
-        rps_send(sockfd, ipaddr, port, answer);
-        recv_buffer = rps_recv(sockfd, ip, &tempport, 40);
-        printf("%s", recv_buffer);
-        recv_buffer = rps_recv(sockfd, ip, &tempport, 40);
-        printf("%s\n", recv_buffer);
-    }   
-    else if(strncmp(answer, "N", 1) == 0){
-        rps_send(sockfd, ipaddr, port , answer);
-        recv_buffer = rps_recv(sockfd, ip, &tempport, 50); //Get the stats from the server before closing
-        printf("Goodbye\n"); //get stats
-    }
+//-------------------------------------------------------------------------
 
-    
-    /*
-    printf("Entering Recv Loop...\n");
-    for (;;){
-        rps_recv(sockfd, ipaddr, port, recv_buffer, 4);
-        printf("-------------------------------------------------------\n");    
-        printf("Received the following:\n"); 
-        printf("%s",recv_buffer); 
+    recv_buffer = rps_recv(sockfd, ip, &tempport, 60);  //Game Prompt
+    printf("%s\n",recv_buffer); 
+    recv_buffer = rps_recv(sockfd, ip, &tempport, 25);  //Choice: 
+    printf("%s",recv_buffer); 
+//-------------------------------------------------------------------------
+    while(playflag !=0){
+       fgets(answer, 3, stdin);                              // Gets the user's Y or N input
+       for(i =0; answer[i]; i++){
+           answer[i] = tolower(answer[i]);
+       }
+       if(*answer == 'y'){
+           rps_send(sockfd, ipaddr, port, answer);            // Send user's answer to server
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 50); // Server's response of allowable moves
+           printf("%s", recv_buffer);                         
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 12); // Sever's prompt
+           printf("%s", recv_buffer);  
+           fgets(answer, 10, stdin);                          // User's move
+           rps_send(sockfd, ipaddr, port, answer);            // Send's user's move to server
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 40); // Server's Move
+           printf("%s", recv_buffer);
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 40); // Result of Game
+           printf("%s\n", recv_buffer);
+           printf("-------------------------------------------------------------------\n");
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 40); // Server asks if user wants to continue to play?
+           printf("%s\n", recv_buffer);
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 40); // Server send choice: 
+           printf("%s", recv_buffer);             
+       }   
+       else if(*answer == 'n'){
+           rps_send(sockfd, ipaddr, port , answer);
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 50); //Get the stats from the server before closing
+           printf("Goodbye\n"); //get stats
+           playflag =0;
+       }
+       else {
+           printf("Invalid Choice, Please select Y/N: ");
+       }
     }
-    */
 }
 
 int main(int argc, char *argv[]){

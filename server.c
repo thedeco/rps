@@ -14,62 +14,90 @@ The game takes user input converts it to lowercase, generates the server's move 
 int playgame(int sockfd, char *ip, uint16_t port){
     int servaction,useraction,i;
     char * userinput;
- 
-    rps_send(sockfd, ip, port,"Select: <ROCK>, <PAPER>, or <SCISSOR>\n");
-    rps_send(sockfd, ip, port,"Choice: ");
-    userinput = rps_recv(sockfd, ip, &port, 8);
-    printf("User Picked: %s", userinput);
+    int playflag =1;
 
-    //Change user input to all lowercase
-    for(i = 0; userinput[i]; i++){
-        userinput[i] = tolower(userinput[i]); 
-    }
- 
-    if((strncmp("rock",userinput,strlen(userinput)-1) == 0))
-        useraction = MOVE_ROCK;
-    else if((strncmp("paper",userinput,strlen(userinput)-1) == 0))
-        useraction = MOVE_PAPER;
-    else if((strncmp("scissor",userinput,strlen(userinput)-1) ==0))
-        useraction = MOVE_SCISSOR;
-    else{
-        printf("Invalid move!\n");
-        rps_send(sockfd, ip, port, "Invalid Move!\n");
-        rps_send(sockfd, ip, port, "Valid Moves: <Rock>, <Paper>, <Scissor>\n"); 
-        return INVALIDPLAY;
-    }
-    
-    srand(time(NULL)); 
-    servaction = (rand()%3);
-    if(servaction == MOVE_ROCK){
-        printf("Server picked: Rock\n");
-        rps_send(sockfd, ip, port,"Server picked Rock\n");
-    }
-    else if(servaction == MOVE_PAPER){
-       printf("Server picked: Paper\n");
-       rps_send(sockfd, ip, port,"Select: <ROCK>, <PAPER>, or <SCISSOR>\n"); 
+    rps_send(sockfd,ip,port,"Want to play a game?");
+    rps_send(sockfd,ip,port,"(Y/N): ");
+    userinput = rps_recv(sockfd, ip, &port,1);
+    if(*userinput == 'y')
+        printf("User said Yes! Starting new game!\n");
+    else if(*userinput == 'n'){
+        printf("User does not want to play\n");
+        playflag = 0;
+        rps_send(sockfd, ip, port, "Goodbye!");
+        return -2;
     }
     else {
-        printf("Server picked: Scissor\n");
-        rps_send(sockfd, ip, port,"Select: <ROCK>, <PAPER>, or <SCISSOR>\n");
+        printf("Invalid Y/N selection\n");
     }
 
-    if(rules[servaction][useraction] == 0){
-        printf("Tied Game!\n");
-        rps_send(sockfd, ip, port, "Tied Game!");
+    while(playflag != 0){ 
+        printf("Waiting for User's move...\n");
+        rps_send(sockfd, ip, port,"Select: <ROCK>, <PAPER>, or <SCISSOR>\n");
+        rps_send(sockfd, ip, port,"Choice: ");
+        userinput = rps_recv(sockfd, ip, &port, 8);
+        printf("User Picked: %s", userinput);
+    
+        //Change user input to all lowercase
+        for(i = 0; userinput[i]; i++){
+            userinput[i] = tolower(userinput[i]); 
+        }
+     
+        if((strncmp("rock",userinput,strlen(userinput)-1) == 0))
+            useraction = MOVE_ROCK;
+        else if((strncmp("paper",userinput,strlen(userinput)-1) == 0))
+            useraction = MOVE_PAPER;
+        else if((strncmp("scissor",userinput,strlen(userinput)-1) ==0))
+            useraction = MOVE_SCISSOR;
+        else{
+            printf("Invalid move!\n");
+            rps_send(sockfd, ip, port, "Invalid Move!\n");
+            rps_send(sockfd, ip, port, "Valid Moves: <Rock>, <Paper>, <Scissor>\n"); 
+                return INVALIDPLAY;
+        }
+    
+        srand(time(NULL)); 
+        servaction = (rand()%3);
+        if(servaction == MOVE_ROCK){
+            printf("Server picked: Rock\n");
+            rps_send(sockfd, ip, port,"Server picked Rock\n");
+        }
+        else if(servaction == MOVE_PAPER){
+           printf("Server picked: Paper\n");
+           rps_send(sockfd, ip, port,"Server picked Paper\n"); 
+        }
+        else {
+            printf("Server picked: Scissor\n");
+            rps_send(sockfd, ip, port,"Server picked Scissor\n");
+        }
+    
+        if(rules[servaction][useraction] == 0){
+            printf("Tied Game!\n");
+            rps_send(sockfd, ip, port, "Tied Game!");
+        }
+        else if(rules[servaction][useraction] == 1){ 
+            printf("User wins!\n");
+            rps_send(sockfd, ip, port, "You Win!");
+        }
+        else if(rules[servaction][useraction] == -1){ 
+            printf("Server wins!\n");
+            rps_send(sockfd, ip, port, "You Lose!");
+        } 
+        printf("Asking User if they want to play again...\n");  
+        rps_send(sockfd, ip, port, "Do you want to play again?");
+        rps_send(sockfd, ip, port, "(Y/N): ");
+        userinput = rps_recv(sockfd, ip, &port, 3);
+        if(*userinput == 'n'){
+            printf("User said no.");
+            playflag = 0;
+            printf("Sending Goodbye.\n");
+            rps_send(sockfd, ip, port, "Goodbye User!\n");
+        }
     }
-    else if(rules[servaction][useraction] == 1){ 
-        printf("User wins!\n");
-        rps_send(sockfd, ip, port, "You Win!");
-    }
-    else if(rules[servaction][useraction] == -1){ 
-        printf("Server wins!\n");
-        rps_send(sockfd, ip, port, "You Lose!");
-    } 
-   
     return rules[servaction][useraction];
 }
-
-/*
+    
+/*  
 Sends the new user a welcome message and prompts if the user wants to play returns 1 for new game and 2 for goodbye message
 */
 int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
@@ -77,14 +105,8 @@ int sendwelcomemsg(int sockfd, char * ip, uint16_t port){
     printf("Sending Welcome Message to: %s on port: %hu\n", ip, port);
     rps_send(sockfd,ip,port,"Welcome to my rock paper scissor server!");  
     printf("Sending Game Prompt to: %s on port: %hu\n", ip, port);
-    rps_send(sockfd,ip,port,"Want to play a game?");
-    rps_send(sockfd,ip,port,"(Y/N): ");
-    recv_buffer = rps_recv(sockfd, ip, &port,1);
-    if(*recv_buffer == 'Y')
-        printf("Starting new game!, Waiting for User's move...\n");
-        playgame(sockfd, ip, port);
-//    printf("User answer: %s\n", recv_buffer);
-
+    printf("Waiting on user's response to game prompt...\n");
+    playgame(sockfd, ip, port);
 }
 
 /*
