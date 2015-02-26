@@ -37,7 +37,8 @@ int createSocket(char * ip, uint16_t port){
  else
     printf("Bound to IP: %s\n", ip);
     printf("Bound to Port: %d\n", ntohs(addr.sin_port));
-
+    printf("-----------------------------------------------------------------\n");    
+    
 //-------------------------------------------------------------------
 //sockfd is the file descriptor for the newly created socket
     return sockfd;

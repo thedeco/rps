@@ -7,25 +7,37 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     char * recv_buffer;
     char ip[16];
     uint16_t tempport;
-    char answer[2];
+    char answer[10];
 
-    //inet_ntop(AF_INET, &(*srvaddr.sin_addr.s_addr), srvip, 16);
-    //printf("Connecting to: (%s:%hu)\n",srvip,ntohs(srvaddr.sin_port));
     printf("Connecting to server: %s, on port %hu\n", ipaddr, port);
     rps_send(sockfd,ipaddr, port, "Hello");
     recv_buffer = rps_recv(sockfd, ip, &tempport, 60); //60 Bytes to recv welcome msg from server
-    printf("-------------------------------------------------------\n");    
-    printf("Received the following:\n"); 
     printf("%s\n",recv_buffer); 
     recv_buffer = rps_recv(sockfd, ip, &tempport, 60); //60 Bytes to recv prompt msg from server
     printf("%s\n",recv_buffer); 
     recv_buffer = rps_recv(sockfd, ip, &tempport, 25);
     printf("%s",recv_buffer); 
-    fgets(answer, 2, stdin);
-    printf("%s\n", answer);   
-    if(strncmp(answer, "N", 1) == 0){
+    fgets(answer, 3, stdin);
+    if(strncmp(answer, "Y", 1) == 0){
+        rps_send(sockfd, ipaddr, port, answer);
+        recv_buffer = rps_recv(sockfd, ip, &tempport, 50);
+        printf("%s", recv_buffer);
+        recv_buffer = rps_recv(sockfd, ip, &tempport, 12);
+        printf("%s", recv_buffer);  
+        fgets(answer, 10, stdin);
+        rps_send(sockfd, ipaddr, port, answer);
+        recv_buffer = rps_recv(sockfd, ip, &tempport, 40);
+        printf("%s", recv_buffer);
+        recv_buffer = rps_recv(sockfd, ip, &tempport, 40);
+        printf("%s\n", recv_buffer);
+    }   
+    else if(strncmp(answer, "N", 1) == 0){
+        rps_send(sockfd, ipaddr, port , answer);
+        recv_buffer = rps_recv(sockfd, ip, &tempport, 50); //Get the stats from the server before closing
         printf("Goodbye\n"); //get stats
+    }
 
+    
     /*
     printf("Entering Recv Loop...\n");
     for (;;){
@@ -71,13 +83,12 @@ int main(int argc, char *argv[]){
             return -1;
         }
     }
-    
-
-
+   
+    printf("-----------------------------------------------------------------\n");    
     printf("Starting Client Program\n");
     sockfd = createSocket(ipaddr, 0);
     sendHelloMessage(sockfd, ipaddr, port);
-    printf("Closing Socket #: %d\n", sockfd);   
+//    printf("Closing Socket #: %d\n", sockfd);   
     close(sockfd);
 }
 
