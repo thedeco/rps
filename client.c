@@ -1,5 +1,36 @@
 #include "client.h"
 
+
+void getmove(char * answer){
+    char move[10];
+    int i;
+    int flag=0;
+
+    while (flag == 0){
+        fgets(move, 8, stdin);
+        for(i=0; move[i]; i++){
+            move[i] = tolower(move[i]);
+        }
+        if(strncmp(move, "rock", strlen(move)-1) == 0){
+            memcpy(answer, move, 4);
+            flag = 1;
+        }
+        else if(strncmp(move, "paper", strlen(move)-1) == 0){
+            memcpy(answer, move, 5);
+            flag = 1;
+        }
+        else if(strncmp(move, "scissor", strlen(move)-1) == 0){
+            memcpy(answer, move, 7);
+            flag = 1;
+        }
+        else{
+            printf("Incorrect move please try again\n");
+            printf("Choice: ");
+        }
+    }
+}
+
+
 /*
 Initiate handshake with the server
 */
@@ -34,7 +65,7 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
            printf("%s", recv_buffer);                         
            recv_buffer = rps_recv(sockfd, ip, &tempport, 12); // Sever's prompt
            printf("%s", recv_buffer);  
-           fgets(answer, 10, stdin);                          // User's move
+           getmove(answer);                        // User's move
            rps_send(sockfd, ipaddr, port, answer);            // Send's user's move to server
            recv_buffer = rps_recv(sockfd, ip, &tempport, 40); // Server's Move
            printf("%s", recv_buffer);
