@@ -60,11 +60,9 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
 
 int main(int argc, char *argv[]){
     int sockfd, opt;
-    char *ipaddr, *buf;
-    uint16_t port;
-   
-    ipaddr = "127.0.0.1";
-    port = 0;
+    char ipaddr[16] = "127.0.0.1";
+    char  buf[16];
+    uint16_t port = 0;
 
     while ((opt = getopt(argc, argv, "i:p:")) != -1) {
         switch (opt) {

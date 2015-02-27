@@ -186,15 +186,9 @@ int cleanup(int sockfd){
 int main(int argc, char *argv[]){
     struct gameinfo game;
     int sockfd, result, opt;
-    char * ipaddr,buf;
-    uint16_t port;
-
-    ipaddr = "127.0.0.1";
-    port = 1337;
-    //if(argc < 2 || argc > 2){
-     //   fprintf(stderr, "Usage: %s [-i IP Address] [-p Port #]\n",argv[0]);
-      //  return -1;
-   // }
+    char ipaddr[16] = "127.0.0.1";
+    char buf[16];
+    uint16_t port = 1337;
  
     while ((opt = getopt(argc, argv, "i:p:")) != -1) {
         switch (opt) {
@@ -223,21 +217,11 @@ int main(int argc, char *argv[]){
         }
     }
  
-
     printf("-----------------------------------------------------------------\n");     
     printf("Starting Game Server\n");
     create(&game);
     sockfd = createSocket(ipaddr, port);
     recvinfo(sockfd);
-    //result = playgame();
-    //printf("%d\n",result);
-    //printf("Play Again <Y/N>: ");
-    //fgets(userinput, sizeof(userinput), stdin);
-    //if(strncmp("N", userinput, strlen(userinput)-1) == 0)
-      //  return 0;
-    //if(strncmp("Y", userinput, strlen(userinput)-1) == 0)
-      //  playgame();
- 
     return 0;  
   }
 
