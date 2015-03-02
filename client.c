@@ -1,26 +1,26 @@
 #include "client.h"
 
-
+//returns 1 for good input 0 for bad input
 void getmove(char * answer){
     char move[10];
     int i;
     int flag=0;
 
     while (flag == 0){
-        fgets(move, 8, stdin);
+        fgets(move, 10, stdin);
         for(i=0; move[i]; i++){
             move[i] = tolower(move[i]);
         }
         if(strncmp(move, "rock", strlen(move)-1) == 0){
-            memcpy(answer, move, 4);
+            memcpy(answer, move, 10);
             flag = 1;
         }
         else if(strncmp(move, "paper", strlen(move)-1) == 0){
-            memcpy(answer, move, 5);
+            memcpy(answer, move, 10);
             flag = 1;
         }
         else if(strncmp(move, "scissor", strlen(move)-1) == 0){
-            memcpy(answer, move, 7);
+            memcpy(answer, move, 10);
             flag = 1;
         }
         else{
@@ -29,7 +29,6 @@ void getmove(char * answer){
         }
     }
 }
-
 
 /*
 Initiate handshake with the server
@@ -40,6 +39,7 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     uint16_t tempport;
     char answer[10];
     int playflag = 1, i;
+    struct user currentuser;
 
 //Sends Hello Message to server and gets response & prints it--------------
     printf("Connecting to server: %s, on port %hu\n", ipaddr, port);
@@ -79,8 +79,10 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
        }   
        else if(*answer == 'n'){
            rps_send(sockfd, ipaddr, port , answer);
-           recv_buffer = rps_recv(sockfd, ip, &tempport, 50); //Get the stats from the server before closing
-           printf("Goodbye\n"); //get stats
+           recv_buffer = rps_recv(sockfd, ip, &tempport, 25); //Get Goodbye msg from server
+           printf("%s\n", recv_buffer);
+           //currentuser = (struct user)rps_recv(sockfd, ip, &tempport, sizeof(struct user)); //Get the stats from the server before closingi
+           printf("%s\n", currentuser.ipaddr);
            playflag =0;
        }
        else {

@@ -19,7 +19,7 @@
 #define INVALIDPLAY 2
 
 struct user {
-    uint32_t ipaddr;
+    char * ipaddr;
     int wins;
     int ties;
     int losses;
