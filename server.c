@@ -1,6 +1,58 @@
 #include "server.h"
 //getstats
- //printf("ties: %d wins: %d losses: %d\n", ties,wins,losses);
+//printf("ties: %d wins: %d losses: %d\n", ties,wins,losses)
+
+//return 0 for valid input -1 for bad input
+int validateuserinput(int sockfd, char * ip, uint16_t port,int type, char * userinput, int * useraction){
+    int flag = 0,i;
+    
+    //Change user input to all lowercase
+    for(i = 0; userinput[i]; i++){
+        userinput[i] = tolower(userinput[i]); 
+    }
+
+    //Type 1 is a yes/no message
+    if(type == 1){
+        if(*userinput == 'y'){
+            printf("User said Yes! Starting new game!\n");
+            return 0;
+        }
+        else if(*userinput == 'n'){
+            printf("User does not want to play\n");
+            *useraction = 0;
+            rps_send(sockfd, ip, port, "Goodbye!");
+            return 0;
+        }
+        else {
+            printf("Invalid Y/N selection\n");
+            rps_send(sockfd, ip, port, "Invalid Y/N Selection!\n");
+            rps_send(sockfd, ip, port, "Please select <Y/N>: "); 
+            return -1;
+        }
+    }
+
+    //Type 2 is a User move message
+    else if (type == 2){
+        if((strncmp("rock",userinput,strlen(userinput)-1) == 0)){
+            *useraction = MOVE_ROCK;
+            return 0;
+        }
+        else if((strncmp("paper",userinput,strlen(userinput)-1) == 0)){
+            *useraction = MOVE_PAPER;
+            return 0; 
+        }
+        else if((strncmp("scissor",userinput,strlen(userinput)-1) ==0)){
+            *useraction = MOVE_SCISSOR;
+            return 0;
+        }
+        else{
+            printf("Invalid move!\n");
+            rps_send(sockfd, ip, port, "Invalid Move!\n");
+            rps_send(sockfd, ip, port, "Valid Moves: <Rock>, <Paper>, <Scissor>\n"); 
+            return -1;
+        }
+    }
+}
     
 /*
 Game result lookup table used by the return value of the playgame function
@@ -15,21 +67,12 @@ int playgame(int sockfd, char *ip, uint16_t port){
     int servaction,useraction,i;
     char * userinput;
     int playflag =1;
+    int validinput = 0;
 
     rps_send(sockfd,ip,port,"Want to play a game?");
     rps_send(sockfd,ip,port,"(Y/N): ");
     userinput = rps_recv(sockfd, ip, &port,1);
-    if(*userinput == 'y')
-        printf("User said Yes! Starting new game!\n");
-    else if(*userinput == 'n'){
-        printf("User does not want to play\n");
-        playflag = 0;
-        rps_send(sockfd, ip, port, "Goodbye!");
-        return -2;
-    }
-    else {
-        printf("Invalid Y/N selection\n");
-    }
+    validateuserinput(sockfd, ip, port, 1, userinput,&playflag);   
 
     while(playflag != 0){ 
         printf("Waiting for User's move...\n");
@@ -37,25 +80,9 @@ int playgame(int sockfd, char *ip, uint16_t port){
         rps_send(sockfd, ip, port,"Choice: ");
         userinput = rps_recv(sockfd, ip, &port, 8);
         printf("User Picked: %s", userinput);
-    
-        //Change user input to all lowercase
-        for(i = 0; userinput[i]; i++){
-            userinput[i] = tolower(userinput[i]); 
-        }
-     
-        if((strncmp("rock",userinput,strlen(userinput)-1) == 0))
-            useraction = MOVE_ROCK;
-        else if((strncmp("paper",userinput,strlen(userinput)-1) == 0))
-            useraction = MOVE_PAPER;
-        else if((strncmp("scissor",userinput,strlen(userinput)-1) ==0))
-            useraction = MOVE_SCISSOR;
-        else{
-            printf("Invalid move!\n");
-            rps_send(sockfd, ip, port, "Invalid Move!\n");
-            rps_send(sockfd, ip, port, "Valid Moves: <Rock>, <Paper>, <Scissor>\n"); 
-                return INVALIDPLAY;
-        }
-    
+        validateuserinput(sockfd, ip, port,2, userinput,&useraction);
+    }
+
         srand(time(NULL)); 
         servaction = (rand()%3);
         if(servaction == MOVE_ROCK){
