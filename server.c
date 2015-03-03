@@ -1,8 +1,8 @@
 #include "server.h"
-//getstats
-//printf("ties: %d wins: %d losses: %d\n", ties,wins,losses)
 
-//returns -1 if ther user doesn't exit or the index of the user
+/*
+Playersearch function returns -1 if the user doesn't exist or the index of the user.
+*/
 int playersearch(struct gameinfo * game, char * ip){
 	int i;
 	struct user * currentuser;
@@ -52,7 +52,9 @@ void playeradd(struct gameinfo * game,char * ip){
 	}
 }
 
-//return 1 for valid input 0 for bad input
+/*
+Validateuserinput function takes userinput and ensures that it is a valid user input. It returns 1 for valid input 0 for bad input.
+*/
 int validateuserinput(int sockfd, char * ip, uint16_t port,int type, char * userinput,int *useraction){
     int flag = 0,i;
     
@@ -102,13 +104,50 @@ int validateuserinput(int sockfd, char * ip, uint16_t port,int type, char * user
         }
     }
 }
-    
+
 /*
-Game result lookup table used by the return value of the playgame function
+Getservermove generates the server's random move and sends it to the client and returns the server's move.
 */
-int rules[3][3] = {{USER_TIE, USER_WIN, USER_LOSS},
-               {USER_LOSS, USER_TIE, USER_WIN},
-               {USER_WIN, USER_LOSS, USER_TIE}};
+int getservermove(int sockfd, char *ip, uint16_t port){
+    int servaction;
+    srand(time(NULL)); 
+    servaction = (rand()%3);
+    if(servaction == MOVE_ROCK){
+        printf("Server picked: rock\n");
+        rps_send(sockfd, ip, port,"Server picked rock\n");
+    }
+    else if(servaction == MOVE_PAPER){
+        printf("Server picked: paper\n");
+        rps_send(sockfd, ip, port,"Server picked paper\n"); 
+    }
+    else {
+        printf("Server picked: scissor\n");
+        rps_send(sockfd, ip, port,"Server picked scissor\n");
+    }
+    return servaction;
+}
+
+/*
+Getgameresults compares the server's move and the user's move and determines the winner. It sends the results to the user and updates their stats
+*/ 
+void getgameresults(int sockfd, char *ip, uint16_t port, int servaction,int useraction, struct user * currentuser){
+    if(rules[servaction][useraction] == 0){
+        printf("Tied Game!\n");
+        currentuser->ties++;
+        rps_send(sockfd, ip, port, "Tied Game!");
+    }
+    else if(rules[servaction][useraction] == 1){ 
+        printf("User wins!\n");
+        currentuser->wins++;
+        rps_send(sockfd, ip, port, "You Win!");
+    }
+    else if(rules[servaction][useraction] == -1){ 
+        printf("Server wins!\n");
+        currentuser->losses++;
+        rps_send(sockfd, ip, port, "You Lose!");
+    }     
+}
+   
 /*
 The game takes user input converts it to lowercase, generates the server's move and returns the result of the user's input vs the server's
 */
@@ -144,37 +183,9 @@ void playgame(int sockfd, char *ip, uint16_t port, struct gameinfo * game){
             validmove = validateuserinput(sockfd, ip, port,2, userinput,&useraction); 
         }
         printf("User Picked: %s", userinput);
-
-        srand(time(NULL)); 
-        servaction = (rand()%3);
-        if(servaction == MOVE_ROCK){
-            printf("Server picked: rock\n");
-            rps_send(sockfd, ip, port,"Server picked rock\n");
-        }
-        else if(servaction == MOVE_PAPER){
-           printf("Server picked: paper\n");
-           rps_send(sockfd, ip, port,"Server picked paper\n"); 
-        }
-        else {
-            printf("Server picked: scissor\n");
-            rps_send(sockfd, ip, port,"Server picked scissor\n");
-        }
-    
-        if(rules[servaction][useraction] == 0){
-            printf("Tied Game!\n");
-            currentuser->ties++;
-            rps_send(sockfd, ip, port, "Tied Game!");
-        }
-        else if(rules[servaction][useraction] == 1){ 
-            printf("User wins!\n");
-            currentuser->wins++;
-            rps_send(sockfd, ip, port, "You Win!");
-        }
-        else if(rules[servaction][useraction] == -1){ 
-            printf("Server wins!\n");
-            currentuser->losses++;
-            rps_send(sockfd, ip, port, "You Lose!");
-        } 
+        servaction=getservermove(sockfd,ip,port);   
+        getgameresults(sockfd, ip, port, servaction,useraction, currentuser);
+       
         printf("Asking User if they want to play again...\n");  
         rps_send(sockfd, ip, port, "Do you want to play again?");
         rps_send(sockfd, ip, port, "(Y/N): ");

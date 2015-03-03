@@ -33,6 +33,14 @@ struct gameinfo {
     int n; 
 }; 
 
+/*
+Game result lookup table used by the return value of the playgame function
+*/
+int rules[3][3] = {{USER_TIE, USER_WIN, USER_LOSS},
+               {USER_LOSS, USER_TIE, USER_WIN},
+               {USER_WIN, USER_LOSS, USER_TIE}};
+
+
 //Control Flow:
 //#1 User connects>srv chks if user has played before>if yes goto #2 if no goto #3
 //
