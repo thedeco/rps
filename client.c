@@ -39,7 +39,7 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
     uint16_t tempport;
     char answer[10];
     int playflag = 1, i;
-    struct user currentuser;
+    char *w,*l,*t;
 
 //Sends Hello Message to server and gets response & prints it--------------
     printf("Connecting to server: %s, on port %hu\n", ipaddr, port);
@@ -80,9 +80,13 @@ void sendHelloMessage(int sockfd, char * ipaddr, uint16_t port){
        else if(*answer == 'n'){
            rps_send(sockfd, ipaddr, port , answer);
            recv_buffer = rps_recv(sockfd, ip, &tempport, 25); //Get Goodbye msg from server
-           printf("%s\n", recv_buffer);
-           //currentuser = (struct user)rps_recv(sockfd, ip, &tempport, sizeof(struct user)); //Get the stats from the server before closingi
-           printf("%s\n", currentuser.ipaddr);
+           printf("%s", recv_buffer);
+           //Get the stats from the server before closing
+           w = rps_recv(sockfd, ip, &tempport, 2); //wins 
+           l = rps_recv(sockfd, ip, &tempport, 2); //losses
+           t = rps_recv(sockfd, ip, &tempport, 2); //ties
+           printf("User stats:\n");
+           printf("Wins: %d Losses: %d Ties: %d\n", *w,*l,*t);
            playflag =0;
        }
        else {
