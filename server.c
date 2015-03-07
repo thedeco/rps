@@ -168,13 +168,26 @@ void playgame(int sockfd, char *ip, uint16_t port, struct gameinfo * game){
 
     rps_send(sockfd,ip,port,"Want to play a game?");
     rps_send(sockfd,ip,port,"(Y/N): ");
-    while(validyesno == 0){
-        userinput = rps_recv(sockfd, ip, &port,1);
-        validyesno = validateuserinput(sockfd, ip, port, 1, userinput,&useraction);   
-       }
 
     while(playflag == 0){ 
-        validmove = 0;
+        while(validyesno == 0){
+            userinput = rps_recv(sockfd, ip, &port,1);
+            validyesno = validateuserinput(sockfd, ip, port, 1, userinput,&useraction);   
+        }
+        if(*userinput == 'n'){
+            printf("User said no.\n");
+            playflag = 1;
+            printf("Sending Goodbye.\n");
+            rps_send(sockfd, ip, port, "Goodbye User!\n");
+            printf("Sending User's Stats\n");
+            rps_send(sockfd, ip,port, (char *)&(currentuser->wins));
+            rps_send(sockfd, ip,port, (char *)&(currentuser->losses));
+            rps_send(sockfd, ip,port, (char *)&(currentuser->ties));
+            printf("IP: %s wins: %d losses: %d ties: %d\n",ip, currentuser->wins,currentuser->losses, currentuser->ties);
+            return;
+        }
+        validmove=0;
+        validyesno=0;
         printf("Waiting for User's move...\n");
         rps_send(sockfd, ip, port,"Select: <ROCK>, <PAPER>, or <SCISSOR>\n");
         rps_send(sockfd, ip, port,"Choice: ");
@@ -189,18 +202,6 @@ void playgame(int sockfd, char *ip, uint16_t port, struct gameinfo * game){
         printf("Asking User if they want to play again...\n");  
         rps_send(sockfd, ip, port, "Do you want to play again?");
         rps_send(sockfd, ip, port, "(Y/N): ");
-        userinput = rps_recv(sockfd, ip, &port, 3);
-        if(*userinput == 'n'){
-            printf("User said no.\n");
-            playflag = 1;
-            printf("Sending Goodbye.\n");
-            rps_send(sockfd, ip, port, "Goodbye User!\n");
-            printf("Sending User's Stats\n");
-            rps_send(sockfd, ip,port, (char *)&(currentuser->wins));
-            rps_send(sockfd, ip,port, (char *)&(currentuser->losses));
-            rps_send(sockfd, ip,port, (char *)&(currentuser->ties));
-            printf("IP: %s wins: %d losses: %d ties: %d\n",ip, currentuser->wins,currentuser->losses, currentuser->ties);
-        }
     }
 }
     

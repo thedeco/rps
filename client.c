@@ -74,11 +74,11 @@ void clientplaygame(int sockfd, char * ipaddr, uint16_t port){
         else if(*answer == 'n'){
             rps_send(sockfd, ipaddr, port , answer);
             recv_buffer = rps_recv(sockfd, ip, &tempport, 25); //Get Goodbye msg from server
-            printf("%s", recv_buffer);
+            printf("%s\n", recv_buffer);
             //Get the stats from the server before closing
-            w = rps_recv(sockfd, ip, &tempport, 2); //wins 
-            l = rps_recv(sockfd, ip, &tempport, 2); //losses
-            t = rps_recv(sockfd, ip, &tempport, 2); //ties
+            w = rps_recv(sockfd, ip, &tempport, 3); //wins 
+            l = rps_recv(sockfd, ip, &tempport, 3); //losses
+            t = rps_recv(sockfd, ip, &tempport, 3); //ties
             printf("User stats:\n");
             printf("Wins: %d Losses: %d Ties: %d\n", *w,*l,*t);
             playflag =0;
