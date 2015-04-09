@@ -40,11 +40,15 @@
 #define REDO         "Please select <Y/N>: "
 #define INVALID_PLAY "Invalid Move!\n"
 #define VALID_MOVES  "Valid Moves: <Rock>, <Paper>, <Scissor>\n"
+#define FLAG         "flag{FLAG REMOVED}\n"
+#define FAIL         "No flag for you. Better luck next time!\n"
+#define PLAYMORE     "You need to play at least 50 games!\n"
+#define PLAYBETTER   "You need a win % rate > 50%\n"
 
 struct user {
-    uint8_t wins;
-    uint8_t ties;
-    uint8_t losses;
+    uint16_t wins;
+    uint16_t ties;
+    uint16_t losses;
     char * ipaddr;
     struct user * next;
     struct user * prev;
