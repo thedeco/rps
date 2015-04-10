@@ -1,31 +1,29 @@
 #include "server.h"
 
-void printflag(int sockfd, struct user * currentuser)
+void printFlag(int sockfd, struct user * player)
 {
-    float playcount,win_rate;
-    char buffer[50];
-    playcount=(float)(currentuser->wins)+(float)(currentuser->ties)+(float)(currentuser->losses);
-    win_rate=currentuser->wins/playcount;
-    if((playcount > 50) && (win_rate>=.50) ){
-        send(sockfd, FLAG, sizeof(FLAG), 0);
+    int nGames,winrate;
+	char *results;
+	
+    nGames=player->wins+player->ties+player->losses;
+    winrate=((player->wins)*100)/nGames;
+	
+    if((nGames > 50) && (winrate>=50) ){
+        send(sockfd, MSG_FLAG, strlen(MSG_FLAG), 0);
     }
-    else if (playcount <50){
-        send(sockfd,PLAYMORE, sizeof(PLAYMORE), 0);
-        snprintf(buffer, 50, "Number of games you played: %.1f\n",playcount);
-        send(sockfd,buffer,strlen(buffer),0);
-        send(sockfd,FAIL,sizeof(FAIL), 0);
-        
-    }
-    else if (win_rate<.50){
-        send(sockfd,PLAYBETTER,sizeof(PLAYBETTER),0);
-        snprintf(buffer, 50, "Your win rate: %.2f\n",win_rate);
-        send(sockfd,buffer,strlen(buffer),0);
-        send(sockfd,FAIL,sizeof(FAIL),0);
-       
+    else if (nGames<50){
+        asprintf(&results,"Number of games you played: %d\n",nGames);
+        send(sockfd,MSG_PLAYMORE MSG_FAIL,strlen(MSG_PLAYMORE)+strlen(MSG_FAIL),0);
+		send(sockfd,results,strlen(results),0);
+	}
+    else if (winrate<50){
+        asprintf(&results, "Your win rate: %d\n",winrate);
+		send(sockfd,MSG_PLAYBETTER MSG_FAIL,strlen(MSG_PLAYBETTER)+strlen(MSG_FAIL),0);   
+		send(sockfd,results,strlen(results),0);
     }
 }
 
-int playersearch(struct gameinfo * game, char * ip)
+int playerSearch(struct gameinfo * game, char * ip)
 {
 	int i;
 	struct user * currentuser;
@@ -41,14 +39,14 @@ int playersearch(struct gameinfo * game, char * ip)
 	return -1;
 }
 
-void gamecreate(struct gameinfo * game)
+void gameCreate(struct gameinfo * game)
 {
    game->first = NULL;
    game->last = NULL;
    game->n = 0;
 }
 
-void playeradd(struct gameinfo * game,char * ip)
+void playerAdd(struct gameinfo * game,char * ip)
 {
 	struct user * newuser;
 	newuser = (struct user *)malloc(sizeof(struct user));
@@ -63,7 +61,7 @@ void playeradd(struct gameinfo * game,char * ip)
 	if(game->first == NULL){
 		game->first = newuser;
 		game->last = newuser;
-		newuser->prev = NULL;	 	
+		newuser->prev = NULL;
 	}
 	else{
 		game->last->next = newuser;
@@ -87,12 +85,11 @@ int validateuserinput(int sockfd,int type, char * userinput,int *useraction)
             return 1;
         }
         else if(*userinput == 'n'){
-            send(sockfd,BYE_MSG,sizeof(BYE_MSG),0);
+            send(sockfd,MSG_BYE,strlen(MSG_BYE),0);
             return 1;
         }
         else {
-            send(sockfd,INVALID_MOVE,sizeof(INVALID_MOVE),0);
-            send(sockfd,REDO,sizeof(REDO) ,0); 
+            send(sockfd,MSG_INVALIDYN MSG_YN,strlen(MSG_INVALIDYN) + strlen(MSG_YN),0);
             return 0;
         }
     }
@@ -112,9 +109,8 @@ int validateuserinput(int sockfd,int type, char * userinput,int *useraction)
             return 3;
         }
         else{
-            send(sockfd,INVALID_PLAY,sizeof(INVALID_PLAY),0);
-            send(sockfd,VALID_MOVES,sizeof(VALID_MOVES),0); 
-            send(sockfd,CHOICE_PROMPT,sizeof(CHOICE_PROMPT),0);
+            send(sockfd,MSG_BADMOVE MSG_VALIDMOVES MSG_CHOICE,
+				 strlen(MSG_BADMOVE)+strlen(MSG_VALIDMOVES)+strlen(MSG_CHOICE),0);
             return 0;
         }
     }
@@ -126,13 +122,13 @@ int getservermove(int sockfd)
     srand(time(NULL)); 
     servaction = (rand()%3);
     if(servaction == MOVE_ROCK){
-        send(sockfd,SRV_ROCK,sizeof(SRV_ROCK),0);
+        send(sockfd,MSG_ROCK,strlen(MSG_ROCK),0);
     }
     else if(servaction == MOVE_PAPER){
-        send(sockfd,SRV_PAPER,sizeof(SRV_PAPER),0); 
+        send(sockfd,MSG_PAPER,strlen(MSG_PAPER),0); 
     }
     else {
-        send(sockfd,SRV_SCISSOR,sizeof(SRV_SCISSOR),0);
+        send(sockfd,MSG_SCISSOR,strlen(MSG_SCISSOR),0);
     }
     return servaction;
 }
@@ -141,23 +137,23 @@ void getgameresults(int sockfd, int servaction,int useraction, struct user * cur
 {
     if(rules[servaction][useraction] == 0){
         currentuser->ties++;
-        send(sockfd,TIE_MSG,sizeof(TIE_MSG),0);
+        send(sockfd,MSG_TIE,strlen(MSG_TIE),0);
     }
     else if(rules[servaction][useraction] == 1){ 
         currentuser->wins++;
-        send(sockfd,WIN_MSG,sizeof(WIN_MSG),0);
+        send(sockfd,MSG_WIN,strlen(MSG_WIN),0);
     }
     else if(rules[servaction][useraction] == -1){ 
         currentuser->losses++;
-        send(sockfd,LOSE_MSG,sizeof(LOSE_MSG),0);
+        send(sockfd,MSG_LOSE,strlen(MSG_LOSE),0);
     }     
 }
    
-void playgame(int sockfd,char * ip, struct gameinfo * game)
+void playGame(int sockfd,char * ip, struct gameinfo * game)
 {
     int servaction,useraction,i,userindex;
     char *userinput,*usermove;
-    int playflag = 0;
+    int playMSG_FLAG = 0;
     int validyesno = 0;
     int validmove = 0;
     struct user * currentuser;
@@ -166,32 +162,30 @@ void playgame(int sockfd,char * ip, struct gameinfo * game)
     memset(usermove, 0, 15);
     char buffer[100];
 
-    userindex = playersearch(game, ip);
+    userindex = playerSearch(game, ip);
     currentuser = game->first;
     for(i=0; userindex>i; i++){
         currentuser = currentuser->next;
     }
 
-    send(sockfd,WELCOME_MSG,sizeof(WELCOME_MSG),0);  
-    send(sockfd,PLAY_PROMPT,sizeof(PLAY_PROMPT),0);
-    send(sockfd,YN_PROMPT,sizeof(YN_PROMPT),0);
+    send(sockfd,MSG_WELCOME MSG_PLAY MSG_YN,strlen(MSG_WELCOME)+
+		 strlen(MSG_PLAY)+strlen(MSG_YN),0);  
 
-    while(playflag == 0){ 
+    while(playMSG_FLAG == 0){ 
         while(validyesno == 0){
             recv(sockfd, userinput,2,0);
             validyesno = validateuserinput(sockfd, 1, userinput,&useraction);   
         }
         if(*userinput == 'n'){
-            playflag = 1;
+            playMSG_FLAG = 1;
             snprintf(buffer, 100, "IP: %s wins: %d losses: %d ties: %d\n",ip, currentuser->wins,currentuser->losses, currentuser->ties);
             send(sockfd,buffer,strlen(buffer),0);
-            printflag(sockfd, currentuser);
+            printFlag(sockfd, currentuser);
             return;
         }
         validmove=0;
         validyesno=0;
-        send(sockfd,SELECT_PROMPT,sizeof(SELECT_PROMPT),0);
-        send(sockfd,CHOICE_PROMPT,sizeof(CHOICE_PROMPT),0);
+        send(sockfd,MSG_SELECT MSG_CHOICE,strlen(MSG_SELECT)+strlen(MSG_CHOICE),0);
         while(validmove == 0){
             memset(usermove,0,15); 
             recv(sockfd,usermove, 15,0);
@@ -199,12 +193,11 @@ void playgame(int sockfd,char * ip, struct gameinfo * game)
         }
         servaction=getservermove(sockfd);   
         getgameresults(sockfd, servaction,useraction, currentuser);
-        send(sockfd,REPLAY_PROMPT,sizeof(REPLAY_PROMPT),0);
-        send(sockfd,YN_PROMPT,sizeof(YN_PROMPT),0);
+        send(sockfd,MSG_PLAY MSG_YN,strlen(MSG_REPLAY)+strlen(MSG_YN)-2,0);
     }
 }
     
-int recvinfo(int sockfd,struct gameinfo * game)
+int recvInfo(int sockfd,struct gameinfo * game)
 {
     struct sockaddr_in clientaddr;
     char * recv_buffer;
@@ -213,12 +206,12 @@ int recvinfo(int sockfd,struct gameinfo * game)
     socklen_t addr_size = sizeof(struct sockaddr_in);  
     getpeername(sockfd, (struct sockaddr *)&addr, &addr_size);
   
-    if(playersearch(game,inet_ntoa(addr.sin_addr)) == -1){
-        playeradd(game,inet_ntoa(addr.sin_addr));  
-        playgame(sockfd,inet_ntoa(addr.sin_addr),game);
+    if(playerSearch(game,inet_ntoa(addr.sin_addr)) == -1){
+        playerAdd(game,inet_ntoa(addr.sin_addr));  
+        playGame(sockfd,inet_ntoa(addr.sin_addr),game);
     }
     else
-        playgame(sockfd,inet_ntoa(addr.sin_addr),game);
+        playGame(sockfd,inet_ntoa(addr.sin_addr),game);
 } 
 
 void sigchld_handler(int s)
@@ -235,7 +228,7 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int startserver(void)
+int startServer(void)
 {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
 	struct addrinfo hints, *servinfo, *p;
@@ -314,8 +307,8 @@ int startserver(void)
  
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
-            gamecreate(&game);
-        	recvinfo(new_fd,&game);
+            gameCreate(&game);
+        	recvInfo(new_fd,&game);
 			close(new_fd);
 			exit(0);
 		}
@@ -352,13 +345,13 @@ int main(int argc, char *argv[])
                 }
                 break;
     
-               default: /* 'Wrong usage fail' */
+               default: /* 'Wrong usage MSG_FAIL' */
             fprintf(stderr, "Usage: %s [-i IP Address] [-p Port #]\n",argv[0]);
             return -1;
         }
     }
  
     printf("Game server is running...\n");
-    startserver();
+    startServer();
     return 0;  
   }
